@@ -60,6 +60,7 @@ class cond{
             return pthread_cond_signal(&m_cond) == 0;
         }
         bool broadcast(){
+            //唤醒全部阻塞线程
             return pthread_cond_broadcast(&m_cond) == 0;
         }
 
@@ -99,4 +100,5 @@ class sem{
     private:
         sem_t m_sem;
 };
+
 #endif
