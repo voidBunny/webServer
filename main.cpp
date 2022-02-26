@@ -30,6 +30,11 @@ void addsig(int sig, void(handler)(int)){
     */
 }
 
+//添加文件描述符到epoll中
+extern void addfd(int epollfd, int fd, bool one_shot);
+//从epoll中删除文件描述符
+extern void removefd(int epollfd, int fd);
+
 int main(int argc, char* argv[]){
     //命令行传递参数
     if(argc <= 1){
@@ -60,7 +65,10 @@ int main(int argc, char* argv[]){
     int listenfd = socket(PF_INET, SOCK_STREAM, 0);
 
     //补充判断有没有问题
-
+    if(listenfd == -1){
+        perror("socket");
+        exit(-1);
+    }
     //设置端口复用，必须在绑定之前设置
     int reuse = 1;
     setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
@@ -68,12 +76,19 @@ int main(int argc, char* argv[]){
     //绑定
     struct sockaddr_in address;
     address.sin_family = AF_INET;
-    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_addr.s_addr = INADDR_ANY;//0.0.0.0
     address.sin_port = htons(port);
-    bind(listenfd, (struct sockaddr*)&address, sizeof(address));
-    
+    int ret = bind(listenfd, (struct sockaddr*)&address, sizeof(address));
+    if(ret == -1){
+        perror("bind");
+        exit(-2);
+    }
     //监听
-    listen(listenfd, 5);
+    ret = listen(listenfd, 128);
+      if(ret == -1){
+        perror("bind");
+        exit(-3);
+    }
 
     //创建epoll对象，事件数组，添加
     epoll_event events[MAX_EVENT_NUMBER];

@@ -1,5 +1,7 @@
 #ifndef HTTPCONNECTION_H
 #define HTTPCONNECTION_H
+
+#include <sys/epoll.h>
 class http_conn{
     public:
         http_conn(){};
