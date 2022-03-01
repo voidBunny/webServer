@@ -50,13 +50,13 @@ threadpool<T>::threadpool(int thread_number, int max_requests):
         throw std::exception();
     }
     //创建thread_number个线程，并将它们设置为线程脱离
-    for(int i = 0; i < thread_number, i++){
+    for(int i = 0; i < thread_number;i++){
         printf("create the %dth thread\n", i);
         if(pthread_create(m_threads + i, NULL, worker, this) != 0){
             delete [] m_threads;
             throw std::exception();    
         }
-        if(pthread_detach(m_thread[i])){
+        if(pthread_detach(m_threads[i])){
             delete[] m_threads;
             throw std::exception();
         }
@@ -71,7 +71,7 @@ threadpool<T>::~threadpool(){
 template<typename T>
 bool threadpool<T>::append(T * request){
     m_queuelocker.lock();
-    if(m_workqueue.sieze() > m_max_requests){
+    if(m_workqueue.size() > m_max_requests){
         m_queuelocker.unlock();
         return false;
     }

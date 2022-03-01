@@ -70,6 +70,7 @@ int main(int argc, char* argv[]){
         perror("socket");
         exit(-1);
     }
+    
     //设置端口复用，必须在绑定之前设置
     int reuse = 1;
     setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
@@ -127,10 +128,31 @@ int main(int argc, char* argv[]){
                 }
                 //将新的客户的数据初始化，放到数组中
                 users[connfd].init(connfd, client_address);
+            }else if(events[i].events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR)){
+                //对方异常断开或者错误等事件
+                users[sockfd].close_conn();
+            } else if(events[i].events & EPOLLIN){
+                //一次性把所有数据读出来
+                if(users[sockfd].read()){
+                    //成功读出，把内容交给工作线程去处理
+                    pool->append(users + sockfd);
+                }else{
+                    users[sockfd].close_conn();
+                }
+            } else if(events[i].events & EPOLLOUT){
+                //一次性写完所有数据
+                if(!users[sockfd].write()){
+                    //写失败了,关闭连接
+                    users[sockfd].close_conn();
+                }
             }
         }
 
     }
 
+    close(epollfd);
+    close(listenfd);
+    delete []users;
+    delete pool;
     return 0;
 }
